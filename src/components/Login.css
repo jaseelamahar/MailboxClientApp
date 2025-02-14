@@ -1,0 +1,10 @@
+.black-input {
+    background-color: black;   /* Black background */
+    border-radius: 50px;       /* Rounded corners */
+    color: white;              /* White text color */
+  }
+  
+  .black-input::placeholder {
+    color: #888;               /* Lighter color for the placeholder */
+  }
+  

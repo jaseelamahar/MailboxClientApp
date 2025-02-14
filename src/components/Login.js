@@ -5,13 +5,15 @@ import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
 import { AuthContext } from "./auth-context";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { Link } from "react-router-dom/cjs/react-router-dom.min";
+import { Link } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 
 const Login = () => {
   const emailInputRef = useRef();
   const passwordInputRef = useRef();
   const authCtx = useContext(AuthContext);
   const [passwordVisible, setPasswordVisible] = useState(false); 
+  const history=useHistory()
 
   const submitHandler = async (event) => {
     event.preventDefault();
@@ -42,6 +44,7 @@ const Login = () => {
         localStorage.setItem("userEmailId", data.email);
 
         authCtx.login(data.idToken, data.email); // Pass email to AuthContext
+        history.push('/welcome');
       } else {
         alert("Login failed: " + (data.error?.message || "Unknown error"));
       }

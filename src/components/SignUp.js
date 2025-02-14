@@ -41,8 +41,7 @@ const SignUp = () => {
 
   return (
     <div className="d-flex flex-column justify-content-center align-items-center vh-100">
-  {/* Sign Up Card */}
-  <Card className="p-3 shadow-sm w-50" style={{ maxWidth: '300px' }}>
+<Card className="p-3 shadow-sm w-50" style={{ maxWidth: '300px' }}>
     <Card.Body>
       <h3 className="text-center mb-4">SignUp</h3>
       <Form onSubmit={submitHandler}>
