@@ -12,13 +12,13 @@ const MailPage = () => {
   const [editorState, setEditorState] = useState(EditorState.createEmpty());
   const [inboxEmails, setInboxEmails] = useState([]);
   const [sentEmails, setSentEmails] = useState([]);
-  const isMountedRef = useRef(true); // Ref to track component mount status
+  const isMountedRef = useRef(true);
 
-  const userEmail = "test@gmail.com"; // Replace with dynamic user email
+  const userEmail = "test@gmail.com";
   const formattedUserEmail = formatEmailForFirebase(userEmail);
 
   useEffect(() => {
-    isMountedRef.current = true; // Component is mounted
+    isMountedRef.current = true;
 
     const fetchInboxEmails = async () => {
       try {
@@ -26,8 +26,8 @@ const MailPage = () => {
         if (!response.ok) throw new Error("Failed to fetch inbox");
 
         const data = await response.json();
-        if (data) {
-          setInboxEmails((prev) => (isMountedRef.current ? Object.values(data) : prev));
+        if (data && isMountedRef.current) {
+          setInboxEmails(Object.values(data));
         }
       } catch (error) {
         console.error("Inbox Fetch Error:", error);
@@ -37,7 +37,7 @@ const MailPage = () => {
     fetchInboxEmails();
 
     return () => {
-      isMountedRef.current = false; // Mark as unmounted
+      isMountedRef.current = false;
     };
   }, [formattedUserEmail]);
 
@@ -50,8 +50,8 @@ const MailPage = () => {
         if (!response.ok) throw new Error("Failed to fetch sent emails");
 
         const data = await response.json();
-        if (data) {
-          setSentEmails((prev) => (isMountedRef.current ? Object.values(data) : prev));
+        if (data && isMountedRef.current) {
+          setSentEmails(Object.values(data));
         }
       } catch (error) {
         console.error("Sentbox Fetch Error:", error);
@@ -66,15 +66,16 @@ const MailPage = () => {
   }, [formattedUserEmail]);
 
   const handleSendMail = async () => {
+    const receiverEmail = "receiver@gmail.com";
+    const formattedReceiverEmail = formatEmailForFirebase(receiverEmail);
+
     const newEmail = {
-      to: "receiver@gmail.com",
+      to: receiverEmail,
       from: userEmail,
       subject: "Test Subject",
       body: editorState.getCurrentContent().getPlainText(),
       timestamp: new Date().toISOString(),
     };
-
-    const formattedReceiverEmail = formatEmailForFirebase(newEmail.to);
 
     try {
       await fetch(`${firebaseURL}/emails/${formattedReceiverEmail}/inbox.json`, {

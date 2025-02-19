@@ -1,0 +1,60 @@
+/* Overall layout */
+.mail-page {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Navbar Styling */
+  .navbar {
+    margin-bottom: 20px;
+  }
+  
+  /* Sidebar Styling */
+  .sidebar {
+    background-color: #f8f9fa;
+    padding-top: 20px;
+    padding-left: 10px;
+  }
+  
+  .sidebar button {
+    margin-bottom: 10px;
+  }
+  
+  /* Content area Styling */
+  .content-area {
+    padding: 20px;
+    background-color: #f1f1f1;
+  }
+  
+  .content-area h3 {
+    margin-bottom: 20px;
+  }
+  
+  /* ListGroup Styling */
+  .list-group-item {
+    padding: 15px;
+    margin-bottom: 10px;
+    background-color: #fff;
+  }
+  
+  .list-group-item strong {
+    color: #555;
+  }
+  
+  .list-group-item:hover {
+    background-color: #e9ecef;
+  }
+  
+  /* Mobile view adjustments */
+  @media (max-width: 768px) {
+    .sidebar {
+      display: none;
+    }
+  
+    .content-area {
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+  }
+  
