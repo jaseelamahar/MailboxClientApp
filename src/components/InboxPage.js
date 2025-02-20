@@ -81,9 +81,9 @@ const InboxPage = () => {
       <Row>
         {/* Sidebar */}
         <Col xs={2} className="sidebar">
-          <Button variant="primary" block onClick={handleComposeClick}>Compose</Button>
-          <Button variant="secondary" block onClick={fetchInboxEmails}>Inbox</Button>
-          <Button variant="secondary" block onClick={fetchSentMails}>Sent</Button>
+          <Button variant="primary"  className="w-100" onClick={handleComposeClick}>Compose</Button>
+          <Button variant="secondary"  className="w-100" onClick={fetchInboxEmails}>Inbox</Button>
+          <Button variant="secondary"  className="w-100" onClick={fetchSentMails}>Sent</Button>
         </Col>
 
     
@@ -114,7 +114,8 @@ const InboxPage = () => {
               sentMails.map((mail) => (
                 <ListGroup.Item key={mail.id}>
                   <strong>To:</strong> {mail.to} <br />
-                  <strong>Subject:</strong> {mail.subject}
+                  <strong>Subject:</strong> {mail.subject} <br />
+                  <strong>Text:</strong> {mail.body}
                 </ListGroup.Item>
               ))
             )}
