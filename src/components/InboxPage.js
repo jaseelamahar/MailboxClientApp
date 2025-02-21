@@ -1,131 +1,96 @@
-import React, { useState} from "react";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { setEmails, markAsRead } from "./inboxSlice";
+import { Navbar, Container, Row, Col, Button, ListGroup } from "react-bootstrap";
 import { useHistory } from "react-router-dom";
-import { Navbar, Button, Container, Row, Col, ListGroup } from "react-bootstrap";
-import "./InboxPage.css"
 
 const firebaseURL = "https://mailboxclient-7f072-default-rtdb.firebaseio.com";
 
-// Format email to handle Firebase paths
-const formatEmailForFirebase = (email) => email.replace(/\./g, ",");
-
 const InboxPage = () => {
-  const [inboxEmails, setInboxEmails] = useState([]);
-  const [sentMails, setSentMails] = useState([]);
+  const dispatch = useDispatch();
+  const emails = useSelector((state) => state.inbox.emails);
+  const unreadCount = useSelector((state) => state.inbox.unreadCount);
   const history = useHistory();
 
-  
-  
+  useEffect(() => {
+    fetchInboxEmails();
+  }, [dispatch]);
 
-  // Fetch Inbox Mails
   const fetchInboxEmails = async () => {
-    try {
-      const receiverEmail = "receiver@gmail.com"; // Use actual receiver's email
-      const formattedReceiverEmail = formatEmailForFirebase(receiverEmail);
-  
-      const response = await fetch(`${firebaseURL}/emails/${formattedReceiverEmail}/inbox.json`);
-      console.log('Response:', response);
-  
-      const text = await response.text();
-      console.log('Response Text:', text);
-  
-      const data = text ? JSON.parse(text) : null;
-      console.log('Fetched Inbox Data:', data);
-  
-      if (!data || Object.keys(data).length === 0) {
-        console.warn('No inbox emails found or inbox is empty.');
-        setInboxEmails([]);
-      } else {
-        setInboxEmails(Object.values(data));
-      }
-    } catch (error) {
-      console.error('Error fetching inbox emails:', error);
-    }
-  };
-  
-  // Fetch Sent Mails
-  const fetchSentMails = async () => {
-    try {
-      const senderEmail= "test@gmail.com";
-      const formattedSenderEmail = formatEmailForFirebase(senderEmail);
-      const response = await fetch(`${firebaseURL}/emails/${formattedSenderEmail}/sent.json`);
-      const data = await response.json();
+    const response = await fetch(`${firebaseURL}/emails.json`);
+    const data = await response.json();
+    console.log("Fetched Firebase Data:", data); // Debugging
 
-      if (data) {
-        const mailsArray = Object.keys(data).map((key) => ({
-          id: key,
-          ...data[key],
+    if (data) {
+      const emailsArray = Object.keys(data).flatMap((userId) => {
+        const userEmails = data[userId]?.inbox; // Extract inbox data
+        if (!userEmails) return [];
+
+        return Object.keys(userEmails).map((emailId) => ({
+          id: emailId, // Store the actual Firebase ID
+          ...userEmails[emailId],
         }));
-        setSentMails(mailsArray);
-      } else {
-        setSentMails([]);
-      }
-    } catch (error) {
-      console.error("Error fetching sent mails:", error);
+      });
+
+      console.log("Processed Emails for Redux:", emailsArray); // Debugging
+      dispatch(setEmails(emailsArray));
     }
   };
 
-  
+  const handleEmailClick = async (email) => {
+    console.log("Email ID in InboxPage:", email.id);
 
-  const handleComposeClick = () => {
-    history.push("/mail");
+    if (!email.read) {
+      await fetch(`${firebaseURL}/emails/${email.id}.json`, {
+        method: "PATCH",
+        body: JSON.stringify({ read: true }),
+      });
+      dispatch(markAsRead(email.id));
+      fetchInboxEmails();
+    }
+    console.log("Email ID in InboxPage:", email.id);
+    history.push(`mail/${email.id}`); // Ensure correct ID is passed
   };
 
   return (
     <div className="mail-page">
-    {/* Navbar */}
-    <Navbar bg="dark" variant="dark" expand="lg">
-      <Navbar.Brand href="#">Yahoo! Mail</Navbar.Brand>
-    </Navbar>
+      <Navbar bg="dark" variant="dark" expand="lg">
+        <Navbar.Brand href="#">Yahoo! Mail</Navbar.Brand>
+      </Navbar>
 
-    <Container fluid>
-      <Row>
-        {/* Sidebar */}
-        <Col xs={2} className="sidebar">
-          <Button variant="primary"  className="w-100" onClick={handleComposeClick}>Compose</Button>
-          <Button variant="secondary"  className="w-100" onClick={fetchInboxEmails}>Inbox</Button>
-          <Button variant="secondary"  className="w-100" onClick={fetchSentMails}>Sent</Button>
-        </Col>
+      <Container fluid>
+        <Row>
+          <Col xs={2} className="sidebar">
+            <Button variant="primary" className="w-100"  onClick={() => history.push("/mail")}>Compose</Button>
+            <Button variant="secondary" className="w-100" onClick={fetchInboxEmails}>
+              Inbox ({unreadCount})
+            </Button>
+          </Col>
 
-    
-       {/* Content Area */}
-       <Col xs={10} className="content-area">
-            <h3>Inbox</h3>
+          <Col xs={10} className="content-area">
+            <h3>Inbox ({unreadCount})</h3>
             <ListGroup>
-              {inboxEmails.length === 0 ? (
+              {emails.length === 0 ? (
                 <p>No mails available.</p>
               ) : (
-                inboxEmails.map((mail) => (
-                  <ListGroup.Item key={mail.id} className="mail-item">
+                emails.map((mail) => (
+                  <ListGroup.Item key={mail.id} className="mail-item" onClick={() => handleEmailClick(mail)}>
                     <Row>
-                      <Col xs={3}><strong>{mail.from}</strong></Col>
-                      <Col xs={6}>{mail.body}</Col>
-                      <Col xs={3}>{mail.timestamp}</Col>
+                      <Col xs={1}>{mail.read ? "" : "🔵"}</Col>
+                      <Col xs={2}><strong>{mail.from}</strong></Col>
+                      <Col xs={2}>{mail.subject}</Col>
+                      <Col xs={2}>{mail.body}</Col>
+                      <Col xs={2}>{mail.timestamp}</Col>
                     </Row>
                   </ListGroup.Item>
                 ))
               )}
             </ListGroup>
-
-          <h3>Sent</h3>
-          <ListGroup>
-            {sentMails.length === 0 ? (
-              <p>No sent mails available.</p>
-            ) : (
-              sentMails.map((mail) => (
-                <ListGroup.Item key={mail.id}>
-                  <strong>To:</strong> {mail.to} <br />
-                  <strong>Subject:</strong> {mail.subject} <br />
-                  <strong>Text:</strong> {mail.body}
-                </ListGroup.Item>
-              ))
-            )}
-          </ListGroup>
-        </Col>
-      </Row>
-    </Container>
-  </div>
-);
+          </Col>
+        </Row>
+      </Container>
+    </div>
+  );
 };
-  
 
 export default InboxPage;

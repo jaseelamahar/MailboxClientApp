@@ -6,6 +6,7 @@ import Login from './components/Login';
 import Welcome from './components/Welcome';
 import MailPage from './components/MailPage';
 import InboxPage from './components/InboxPage';
+import MailDetail from './components/MailDetail';
 
 
 const App = () => {
@@ -25,6 +26,7 @@ const App = () => {
         <Route path="/welcome" component={Welcome}/>
         <Route path="/mail" component={MailPage}/>
         <Route path="/inbox" component={InboxPage}/>
+        <Route path="/mail/:id" component={MailDetail} />
       </Router>
     </div>
   );
