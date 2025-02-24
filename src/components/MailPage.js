@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { addSentEmail } from "./inboxSlice";
+import  addSentEmail  from "./inboxSlice";
 import { Form, Button } from "react-bootstrap";
 import { Editor } from "react-draft-wysiwyg";
 import { EditorState } from "draft-js";

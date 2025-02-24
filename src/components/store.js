@@ -1,9 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
 import inboxReducer from "./inboxSlice";
+import sentReducer from "./sentSlice"
 
 const store = configureStore({
   reducer: {
-    inbox: inboxReducer
+    inbox: inboxReducer,
+    sent:sentReducer
   }
 });
 
