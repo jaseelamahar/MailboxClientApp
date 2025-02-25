@@ -1,48 +1,83 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
+const firebaseURL = 'https://mailboxclient-7f072-default-rtdb.firebaseio.com';
+
+// Initial state for sent emails
+const initialState = {
+  emails: [],
+  loading: false,
+  error: null,
+};
+
 // Fetch Sent Emails from Firebase
 export const fetchSentEmails = createAsyncThunk(
-    'sent/fetchSentEmails', // action type
-    async () => {
-      const firebaseURL = 'https://mailboxclient-7f072-default-rtdb.firebaseio.com';
-      const response = await fetch(`${firebaseURL}/emails.json`);
-      const data = await response.json();
-      
-      // Process and return the sent emails
-      const emailsArray = Object.keys(data).flatMap((userKey) => {
-        if (!data[userKey]?.sent) return [];
-        const formattedUserKey = userKey.replace(/[@]/g, ',');
-        return Object.keys(data[userKey].sent).map((emailId) => {
-          const emailData = data[userKey].sent[emailId];
-          return { id: emailId, userId: formattedUserKey, ...emailData };
-        });
+  'sent/fetchSentEmails',
+  async () => {
+    const response = await fetch(`${firebaseURL}/emails.json`);
+    const data = await response.json();
+    console.log("Fetched Sent Emails Data:", data);
+
+    // Process and return the sent emails
+    const emailsArray = Object.keys(data).flatMap((userKey) => {
+      if (!data[userKey]?.sent) return [];
+      const formattedUserKey = userKey.replace(/[@]/g, ',');
+      return Object.keys(data[userKey].sent).map((firebaseKey) => {
+        const emailData = data[userKey].sent[firebaseKey];
+        return { firebaseKey, userId: formattedUserKey, ...emailData };
       });
-  
-      return emailsArray.filter((email) => email.id); // Only return emails with id
-    }
-  );
-  
+    });
+
+    return emailsArray.filter((email) => email.firebaseKey); // Only return emails with a Firebase key
+  }
+);
 
 // Delete Sent Email from Firebase
 export const deleteSentEmail = createAsyncThunk(
   'sent/deleteSentEmail',
-  async ({ userId, emailId }) => {
-    const formattedUserId = userId.replace(',', '@'); // Format userId for Firebase
-    await fetch(`https://mailboxclient-7f072-default-rtdb.firebaseio.com/emails/${formattedUserId}/sent/${emailId}.json`, {
-      method: 'DELETE',
-    });
-    return emailId; // Return the email ID to be removed from the state
+  async ({ userId, firebaseKey }, { rejectWithValue }) => {
+    console.log("Received for deletion -> userId:", userId, "firebaseKey:", firebaseKey);
+    const formattedUserId = userId.replace(',', '@');
+    console.log("Deleting sent email with Firebase key:", firebaseKey);
+
+    try {
+      await fetch(`${firebaseURL}/emails/${formattedUserId}/sent/${firebaseKey}.json`, {
+        method: 'DELETE',
+      });
+      return firebaseKey;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Mark Sent Email as Read
+export const marksentAsRead = createAsyncThunk(
+  'sent/marksentAsRead',
+  async ({ userId, firebaseKey }, { rejectWithValue }) => {
+    console.log("Marking as read -> userId:", userId, "firebaseKey:", firebaseKey);
+    const formattedUserId = userId.replace(',', '@');
+
+    try {
+      await fetch(`${firebaseURL}/emails/${formattedUserId}/sent/${firebaseKey}.json`, {
+        method: 'PATCH',
+        body: JSON.stringify({ read: true }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+      return { firebaseKey, type: "sent" };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
   }
 );
 
 const sentSlice = createSlice({
   name: 'sent',
-  initialState: {
-    emails: [],
-    loading: false,
-    error: null,
+  initialState,
+  reducers: {
+    addSentEmail: (state, action) => {
+      state.emails.push(action.payload);
+    },
   },
-  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchSentEmails.pending, (state) => {
@@ -50,16 +85,33 @@ const sentSlice = createSlice({
       })
       .addCase(fetchSentEmails.fulfilled, (state, action) => {
         state.loading = false;
-        state.emails = action.payload;
+        state.emails = action.payload.filter(
+          (email, index, self) => 
+            index === self.findIndex((e) => e.firebaseKey === email.firebaseKey)
+        );
       })
       .addCase(fetchSentEmails.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
       })
+      .addCase(deleteSentEmail.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(deleteSentEmail.fulfilled, (state, action) => {
-        state.emails = state.emails.filter((email) => email.id !== action.payload); // Remove deleted email from state
+        state.loading = false;
+        console.log("Deleted email with key:", action.payload);
+        state.emails = state.emails.filter((email) => email.firebaseKey !== action.payload);
+      })
+      .addCase(deleteSentEmail.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || action.error.message;
+      })
+      .addCase(marksentAsRead.fulfilled, (state, action) => {
+        const email = state.emails.find((e) => e.firebaseKey === action.payload.firebaseKey);
+        if (email) email.read = true;
       });
   },
 });
 
+export const { addSentEmail } = sentSlice.actions;
 export default sentSlice.reducer;

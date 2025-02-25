@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useContext } from 'react';
+import { AuthContext } from './auth-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchInboxEmails, deleteEmail, markAsRead } from './inboxSlice';
-import { fetchSentEmails, deleteSentEmail } from './sentSlice';
+import { fetchSentEmails, deleteSentEmail,marksentAsRead } from './sentSlice';
 import { Navbar, Container, Row, Col, Button, ListGroup } from 'react-bootstrap';
 import { useHistory } from 'react-router-dom';
 
@@ -9,7 +10,8 @@ const InboxPage = () => {
   const dispatch = useDispatch();
   const history = useHistory();
   const [isSent, setIsSent] = useState(false); // State to toggle between Inbox and Sent
-  const userId = 'yourUserId'; // Replace with actual user ID
+  const userId = 'yourUserId';
+// Replace with actual user ID
 
   // Selectors for inbox and sent emails
   const inboxEmails = useSelector((state) => state.inbox.emails);
@@ -21,25 +23,31 @@ const InboxPage = () => {
   // Fetch emails on component mount
   useEffect(() => {
     if (isSent) {
-      dispatch(fetchSentEmails(userId));
+      dispatch(fetchSentEmails());
     } else {
-      dispatch(fetchInboxEmails(userId));
+      dispatch(fetchInboxEmails());
     }
-  }, [dispatch, isSent, userId]);
+  }, [dispatch, isSent]);
 
   const handleEmailClick = (email) => {
     if (!email.read) {
-      dispatch(markAsRead(email.id)); // Mark as read on single click
+      if (isSent) {
+        dispatch(marksentAsRead({ userId, firebaseKey: email.firebaseKey })); // Sent emails should also be marked as read
+      } else {
+        dispatch(markAsRead(email.firebaseKey)); // Inbox emails
+      }
     }
   };
+  
 
   const handleEmailDoubleClick = (email) => {
-    history.push(`/mail/${email.id}`); // Open email on double click
+    history.push(`/mail/${email.firebaseKey}`); // Use firebaseKey instead of id
   };
 
   const handleDeleteEmail = (email) => {
+    console.log("Email object before deletion:", email);
     if (isSent) {
-      dispatch(deleteSentEmail({ userId, emailId: email.id }));
+      dispatch(deleteSentEmail({ userId, firebaseKey: email.firebaseKey })); // Use firebaseKey
     } else {
       dispatch(deleteEmail(email));
     }
@@ -87,14 +95,13 @@ const InboxPage = () => {
                 ) : (
                   (isSent ? sentEmails : inboxEmails).map((mail) => (
                     <ListGroup.Item
-                      key={mail.id}
+                      key={mail.firebaseKey} // Use firebaseKey instead of id
                       className="mail-item"
                       onClick={() => handleEmailClick(mail)}
                       onDoubleClick={() => handleEmailDoubleClick(mail)}
                     >
                       <Row>
                         <Col xs={1}>{mail.read ? '' : '🔵'}</Col>
-                        <Col xs={2}><strong>{mail.from}</strong></Col>
                         <Col xs={2}>{mail.subject}</Col>
                         <Col xs={2}>{mail.body}</Col>
                         <Col xs={2}>{mail.timestamp}</Col>

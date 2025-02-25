@@ -15,18 +15,19 @@ export const fetchInboxEmails = createAsyncThunk(
     const firebaseURL = 'https://mailboxclient-7f072-default-rtdb.firebaseio.com';
     const response = await fetch(`${firebaseURL}/emails.json`);
     const data = await response.json();
-    
+    console.log("Fetched Data:", data);
+
     // Process and return the emails
     const emailsArray = Object.keys(data).flatMap((userKey) => {
       if (!data[userKey]?.inbox) return [];
       const formattedUserKey = userKey.replace(/[@]/g, ',');
-      return Object.keys(data[userKey].inbox).map((emailId) => {
-        const emailData = data[userKey].inbox[emailId];
-        return { id: emailId, userId: formattedUserKey, ...emailData };
+      return Object.keys(data[userKey].inbox).map((firebaseKey) => {
+        const emailData = data[userKey].inbox[firebaseKey];
+        return { firebaseKey, userId: formattedUserKey, ...emailData };
       });
     });
 
-    return emailsArray.filter((email) => email.id); // Only return emails with id
+    return emailsArray.filter((email) => email.firebaseKey); // Only return emails with a Firebase key
   }
 );
 
@@ -36,19 +37,21 @@ export const deleteEmail = createAsyncThunk(
   async (email, { rejectWithValue }) => {
     const firebaseURL = 'https://mailboxclient-7f072-default-rtdb.firebaseio.com';
     const formattedUserId = email.userId.replace(',', '@');
-    
+    console.log("Formatted User ID:", formattedUserId);
+    console.log("Deleting email with Firebase key:", email.firebaseKey);
+
     try {
       // Delete inbox email
-      await fetch(`${firebaseURL}/emails/${formattedUserId}/inbox/${email.id}.json`, {
-        method: 'DELETE',
-      });
-      
-      // Delete sent email
-      await fetch(`${firebaseURL}/emails/${formattedUserId}/sent/${email.id}.json`, {
+      await fetch(`${firebaseURL}/emails/${formattedUserId}/inbox/${email.firebaseKey}.json`, {
         method: 'DELETE',
       });
 
-      return email.id; // Return email id for Redux update
+      // Delete sent email
+      await fetch(`${firebaseURL}/emails/${formattedUserId}/sent/${email.firebaseKey}.json`, {
+        method: 'DELETE',
+      });
+
+      return email.firebaseKey; // Return firebaseKey for Redux update
     } catch (error) {
       return rejectWithValue(error.message); // Return error message in case of failure
     }
@@ -65,14 +68,14 @@ const inboxSlice = createSlice({
       state.unreadCount = state.emails.filter((email) => !email.read).length;
     },
     markAsRead: (state, action) => {
-      const emailIndex = state.emails.findIndex((email) => email.id === action.payload);
+      const emailIndex = state.emails.findIndex((email) => email.firebaseKey === action.payload);
       if (emailIndex !== -1) {
         state.emails[emailIndex].read = true;
         state.unreadCount = state.emails.filter((email) => !email.read).length;
       }
     },
     addDeleteEmail: (state, action) => {
-      state.emails = state.emails.filter((email) => email.id !== action.payload);
+      state.emails = state.emails.filter((email) => email.firebaseKey !== action.payload);
     },
   },
   extraReducers: (builder) => {
@@ -94,7 +97,8 @@ const inboxSlice = createSlice({
       })
       .addCase(deleteEmail.fulfilled, (state, action) => {
         state.loading = false;
-        state.emails = state.emails.filter((email) => email.id !== action.payload);
+        state.emails = state.emails.filter((email) => email.firebaseKey !== action.payload);
+        state.unreadCount = state.emails.filter((email) => !email.read).length;
       })
       .addCase(deleteEmail.rejected, (state, action) => {
         state.loading = false;
