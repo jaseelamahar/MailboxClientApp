@@ -113,5 +113,5 @@ const sentSlice = createSlice({
   },
 });
 
-export const { addSentEmail } = sentSlice.actions;
+export const {addSentEmail } = sentSlice.actions;
 export default sentSlice.reducer;

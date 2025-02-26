@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import  addSentEmail  from "./sentSlice";
+import  {addSentEmail}  from "./sentSlice";
 import { Form, Button } from "react-bootstrap";
 import { Editor } from "react-draft-wysiwyg";
 import { EditorState } from "draft-js";
@@ -18,7 +18,8 @@ const MailPage = () => {
   const userEmail = "test@gmail.com";
   const formattedUserEmail = formatEmailForFirebase(userEmail);
 
-  const handleSendMail = async () => {
+  const handleSendMail = async (e) => {
+    e.preventDefault();
     if (!recipient.trim() || !subject.trim()) {
       alert("Recipient and Subject are required.");
       return;
@@ -111,7 +112,7 @@ const MailPage = () => {
           borderTop: "1px solid #ccc",
         }}
       >
-        <Button type="submit" className="rounded-2" onClick={handleSendMail}>
+        <Button type="button" className="rounded-2" onClick={handleSendMail}>
           Send
         </Button>
       </div>

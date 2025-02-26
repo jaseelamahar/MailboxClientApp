@@ -1,23 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchInboxEmails, deleteEmail, markAsRead } from "./inboxSlice";
 import { fetchSentEmails, deleteSentEmail, marksentAsRead } from "./sentSlice";
 import { Navbar, Container, Row, Col, Button, ListGroup } from "react-bootstrap";
 import { useHistory } from "react-router-dom";
+import useMailApi from "./useMailApi"; // Import custom hook
 
 const InboxPage = () => {
   const dispatch = useDispatch();
   const history = useHistory();
-  const [isSent, setIsSent] = useState(false); // Toggle between Inbox and Sent
+  const [isSent, setIsSent] = useState(false);
   const userId = "yourUserId"; // Replace with actual user ID
 
-  // Selectors for inbox and sent emails
-  const inboxEmails = useSelector((state) => state.inbox.emails);
-  const sentEmails = useSelector((state) => state.sent.emails);
-  const loading = useSelector((state) => state.inbox.loading || state.sent.loading);
-  const error = useSelector((state) => state.inbox.error || state.sent.error);
-  const unreadCount = useSelector((state) => state.inbox.unreadCount);
+  // Custom hook for inbox emails
+  const { emails: inboxEmails, unreadCount, loading, error, fetchInboxEmails, markAsRead, deleteEmail } = useMailApi();
 
+  // Redux selectors for sent emails
+  const sentEmails = useSelector((state) => state.sent.emails);
+  const sentLoading = useSelector((state) => state.sent.loading);
+  const sentError = useSelector((state) => state.sent.error);
 
   // Poll emails every 2 seconds
   useEffect(() => {
@@ -25,37 +25,33 @@ const InboxPage = () => {
       if (isSent) {
         dispatch(fetchSentEmails());
       } else {
-        dispatch(fetchInboxEmails());
+        fetchInboxEmails(); // Use custom hook instead of Redux
       }
     };
 
     fetchEmails(); // Initial fetch
 
-    const interval = setInterval(fetchEmails, 2000); // Poll every 2 seconds
+    const interval = setInterval(fetchEmails,100000); 
 
-    return () => clearInterval(interval); // Cleanup on unmount
+    return () => clearInterval(interval);
   }, [dispatch, isSent]);
 
   const handleEmailClick = (email) => {
     if (!email.read) {
       if (isSent) {
-        dispatch(marksentAsRead({ userId, firebaseKey: email.firebaseKey })); // Sent emails should also be marked as read
+        dispatch(marksentAsRead({ userId, firebaseKey: email.firebaseKey }));
       } else {
-        dispatch(markAsRead(email.firebaseKey)); // Inbox emails
+        markAsRead(email); // Use custom hook instead of Redux
       }
     }
-  };
-
-  const handleEmailDoubleClick = (email) => {
-    history.push(`/mail/${email.firebaseKey}`); // Navigate to email view
   };
 
   const handleDeleteEmail = (email) => {
     console.log("Email object before deletion:", email);
     if (isSent) {
-      dispatch(deleteSentEmail({ userId, firebaseKey: email.firebaseKey })); // Use firebaseKey
+      dispatch(deleteSentEmail({ userId, firebaseKey: email.firebaseKey }));
     } else {
-      dispatch(deleteEmail(email));
+      deleteEmail(email); // Use custom hook instead of Redux
     }
   };
 
@@ -82,10 +78,10 @@ const InboxPage = () => {
           <Col xs={10} className="content-area">
             <h3>{isSent ? "Sent Emails" : "Inbox"}</h3>
 
-            {loading ? (
+            {loading || sentLoading ? (
               <p>Loading emails...</p>
-            ) : error ? (
-              <p>Error: {error}</p>
+            ) : error || sentError ? (
+              <p>Error: {error || sentError}</p>
             ) : (
               <ListGroup>
                 {(isSent ? sentEmails : inboxEmails).length === 0 ? (
@@ -96,7 +92,7 @@ const InboxPage = () => {
                       key={mail.firebaseKey}
                       className="mail-item"
                       onClick={() => handleEmailClick(mail)}
-                      onDoubleClick={() => handleEmailDoubleClick(mail)}
+                      onDoubleClick={() => history.push(`/mail/${mail.firebaseKey}`)}
                     >
                       <Row>
                         <Col xs={1}>{mail.read ? "" : "🔵"}</Col>
