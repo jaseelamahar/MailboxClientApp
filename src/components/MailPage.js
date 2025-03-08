@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { useDispatch } from "react-redux";
 import  {addSentEmail}  from "./sentSlice";
 import { Form, Button } from "react-bootstrap";
@@ -17,6 +17,13 @@ const MailPage = () => {
 
   const userEmail = "test@gmail.com";
   const formattedUserEmail = formatEmailForFirebase(userEmail);
+
+
+  useEffect(() => {
+    return () => {
+      setEditorState(EditorState.createEmpty()); // Cleanup when unmounting
+    };
+  }, []);
 
   const handleSendMail = async (e) => {
     e.preventDefault();

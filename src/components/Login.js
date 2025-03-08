@@ -5,15 +5,15 @@ import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
 import { AuthContext } from "./auth-context";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import { Link } from "react-router-dom";
-import { useHistory } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
+
 
 const Login = () => {
   const emailInputRef = useRef();
   const passwordInputRef = useRef();
   const authCtx = useContext(AuthContext);
   const [passwordVisible, setPasswordVisible] = useState(false); 
-  const history=useHistory()
+  const history=useHistory();
 
   const submitHandler = async (event) => {
     event.preventDefault();
@@ -52,18 +52,20 @@ const Login = () => {
       alert("Something went wrong: " + error.message);
     }
   };
+
   const togglePasswordVisibility = () => {
     setPasswordVisible((prevState) => !prevState);
   };
 
   return (
-    <div className="d-flex flex-column justify-content-center align-items-center vh-100" >
-      <Card className="p-3 shadow-sm w-50" style={{ maxWidth: '300px' }} >
-      <Card.Body>
+    <div className="d-flex flex-column justify-content-center align-items-center vh-100">
+      <Card className="p-3 shadow-sm w-50" style={{ maxWidth: '300px' }}>
+        <Card.Body>
           <h3 className="text-center mb-4">Login</h3>
           <Form onSubmit={submitHandler}>
-            <Form.Group className="mb-2" >
-              <Form.Control style={{backgroundColor:"black",borderRadius:"50px",color:"white"}}
+            <Form.Group className="mb-2">
+              <Form.Control 
+                style={{ borderRadius: "50px", backgroundColor: "#fff", color: "#000" }} 
                 type="email"
                 placeholder="Enter email"
                 ref={emailInputRef}
@@ -72,43 +74,38 @@ const Login = () => {
             </Form.Group>
 
             <Form.Group className="mb-2 position-relative">
-            <Form.Control  style={{backgroundColor:"black",borderRadius:"50px",color:"white"}}
-               type={passwordVisible ? 'text' : 'password'}
+              <Form.Control  
+                style={{ borderRadius: "50px", backgroundColor: "#fff", color: "#000" }}
+                type={passwordVisible ? 'text' : 'password'}
                 placeholder="Enter password"
-               ref={passwordInputRef}
-                  className="black-input"
-                    required
-                    />
-
+                ref={passwordInputRef}
+                required
+              />
               <div
-                className="password-eye-icon position-absolute"
+                className="position-absolute"
                 onClick={togglePasswordVisibility}
-                style={{ top: '50%', right: '10px', transform: 'translateY(-50%)', cursor: 'pointer',color:"white" }}
+                style={{ top: '50%', right: '10px', transform: 'translateY(-50%)', cursor: 'pointer', color: "black" }}
               >
-                {passwordVisible ? <FaEyeSlash /> : <FaEye />}
+                {passwordVisible ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
               </div>
             </Form.Group>
-            <Button variant="primary" type="submit" className="w-100 rounded-2">
+            
+            <Button variant="primary" type="submit" className="mb-2 w-100">
               Login
             </Button>
             <div>
-            <Link>Forgot password</Link>
+              <Link to="/forgot-password">Forgot password</Link>
             </div>
           </Form>
         </Card.Body>
       </Card>
-      <div
-        className="mt-3 p-2 border rounded text-center w-50"
-        style={{ maxWidth: "300px", backgroundColor: "#e0f7fa" }}
-      >
+      
+      <div className="mt-3 p-2 border rounded text-center w-50" style={{ maxWidth: "300px", backgroundColor: "#e0f7fa" }}>
         <span> Don't have an account? </span>
-        <Button variant="link" size="sm">
-          SignUp
-        </Button>
+        <Button variant="link" size="sm">Sign Up</Button>
       </div>
     </div>
   );
 };
 
 export default Login;
-

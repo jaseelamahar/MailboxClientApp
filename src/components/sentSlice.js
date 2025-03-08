@@ -15,7 +15,7 @@ export const fetchSentEmails = createAsyncThunk(
   async () => {
     const response = await fetch(`${firebaseURL}/emails.json`);
     const data = await response.json();
-    console.log("Fetched Sent Emails Data:", data);
+    //console.log("Fetched Sent Emails Data:", data);
 
     // Process and return the sent emails
     const emailsArray = Object.keys(data).flatMap((userKey) => {
@@ -31,20 +31,28 @@ export const fetchSentEmails = createAsyncThunk(
   }
 );
 
+
 // Delete Sent Email from Firebase
 export const deleteSentEmail = createAsyncThunk(
   'sent/deleteSentEmail',
   async ({ userId, firebaseKey }, { rejectWithValue }) => {
     console.log("Received for deletion -> userId:", userId, "firebaseKey:", firebaseKey);
     const formattedUserId = userId.replace(',', '@');
-    console.log("Deleting sent email with Firebase key:", firebaseKey);
+    //console.log("Deleting :", formattedUserId, "and firebaseKey:", firebaseKey);
 
     try {
-      await fetch(`${firebaseURL}/emails/${formattedUserId}/sent/${firebaseKey}.json`, {
+      const response = await fetch(`${firebaseURL}/emails/${formattedUserId}/sent/${firebaseKey}.json`, {
         method: 'DELETE',
       });
+
+      if (!response.ok) {
+        throw new Error(`Error deleting email: ${response.statusText}`);
+      }
+
+      //console.log("Successfully deleted email with key:", firebaseKey);
       return firebaseKey;
     } catch (error) {
+      console.error("Error deleting email:", error.message);
       return rejectWithValue(error.message);
     }
   }

@@ -1,48 +1,33 @@
-import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-
-const firebaseURL = "https://mailboxclient-7f072-default-rtdb.firebaseio.com";
+import { useEffect, useState } from "react";
+import useMailApi from "./useMailApi";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 const MailDetail = () => {
   const { id } = useParams();
+  const { emails } = useMailApi();
   const [email, setEmail] = useState(null);
 
   useEffect(() => {
-    const fetchEmail = async () => {
-      const response = await fetch(`${firebaseURL}/emails.json`);
-      const data = await response.json();
+    const foundEmail = emails.find((mail) => mail.firebaseKey === id);
+    if (foundEmail) setEmail(foundEmail);
+  }, [emails, id]);
 
-      const userEmail = "a@gmail.com".replace(/\./g, ",");
-      const inbox = data[userEmail]?.inbox || {};
-      const foundEmail = Object.values(inbox).find((email) => String(email.id) === String(id));
-
-      setEmail(foundEmail || null);
-    };
-
-    fetchEmail();
-  }, [id]);
-
-  if (!email) {
-    return <p style={{ textAlign: "center", padding: "20px" }}>Loading email...</p>;
-  }
+  if (!email) return <p className="text-center mt-4">Email not found.</p>;
 
   return (
-    <div style={{ 
-      maxWidth: "600px", 
-      margin: "10px auto", /* Reduced margin to move it up */
-      padding: "15px", 
-      border: "1px solid #ccc", 
-      borderRadius: "8px", 
-      background: "#f9f9f9",
-      position: "relative", /* Ensures it doesn't stick to the bottom */
-      top: "-200px" /* Moves it up slightly */
-    }}>
-    
-      <h2 style={{ borderBottom: "1px solid #ddd", paddingBottom: "10px" }}>{email.subject || "No Subject"}</h2>
-      <p><strong>From:</strong> {email.from || "Unknown"}</p>
-      <p><strong>To:</strong> {email.to || "Unknown"}</p>
-      <div style={{ marginTop: "15px", padding: "10px", background: "#fff", borderRadius: "5px", minHeight: "100px", border: "1px solid #ddd" }}>
-        {email.body || "No Content"}
+    <div className="container mt-4">
+      <div className="card shadow-sm p-4">
+        <h2 className="mb-3">{email.subject}</h2>
+        <div className="row">
+          <div className="col-md-6">
+            <p><strong>From:</strong> {email.from}</p>
+            <p><strong>To:</strong> {email.to}</p>
+          </div>
+         
+        </div>
+        <hr />
+        <p className="mt-3">{email.body}</p>
       </div>
     </div>
   );

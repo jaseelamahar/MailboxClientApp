@@ -2,11 +2,13 @@ import React, { useRef } from 'react';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
+import { useHistory } from "react-router-dom";
 
 const SignUp = () => {
   const emailInputRef = useRef();
   const passwordInputRef = useRef();
   const confirmPasswordRef = useRef();
+  const history=useHistory();
 
   const submitHandler = (event) => {
     event.preventDefault();
@@ -53,11 +55,11 @@ const SignUp = () => {
           <Form.Control type="password" placeholder="Enter password" ref={passwordInputRef} required />
         </Form.Group>
 
-        <Form.Group className="mb-2">
+        <Form.Group className="mb-2" >
           <Form.Control type="password" placeholder="Confirm password" ref={confirmPasswordRef} required />
         </Form.Group>
 
-        <Button variant="primary" type="submit" className="w-100 rounded-2">Sign Up</Button>
+        <Button variant="primary" type="submit" className="w-40 rounded-2">Sign Up</Button>
       </Form>
     </Card.Body>
   </Card>
@@ -65,7 +67,7 @@ const SignUp = () => {
   
   <div className="mt-3 p-2 border rounded text-center w-50" style={{ maxWidth: '300px',backgroundColor: '#e0f7fa' }}>
     <span>Have an account? </span>
-    <Button variant="link" size="sm">Login</Button>
+    <Button variant="link" size="sm" onClick={() => history.push("/login")}>Login</Button>
   </div>
 </div>
   )

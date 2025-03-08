@@ -15,11 +15,13 @@ export const AuthContextProvider = (props) => {
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     const storedEmail = localStorage.getItem("userEmailId");
-    if (storedToken) {
+  
+    if (storedToken && storedEmail) {
       setToken(storedToken);
       setEmail(storedEmail);
     }
   }, []);
+  
 
   const loginHandler = (token, email) => {
     setToken(token);
